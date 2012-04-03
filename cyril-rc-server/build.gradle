@@ -1,0 +1,22 @@
+apply plugin: 'war'
+apply plugin: 'groovy'
+
+
+repositories {
+   flatDir { dirs "lib" }
+   mavenCentral()
+}
+
+
+dependencies {
+    //groovy group: 'org.codehaus.groovy', name: 'groovy', version: '1.8.6'
+    //groovy group:'org.codehaus.groovy.modules.http-builder', name:'http-builder', version:'0.5.2'
+    //runtime "org.codehaus.groovy:groovy-all:1.8.6@jar"	
+	groovy "org.codehaus.groovy:groovy-all:1.8.6@jar"
+    providedCompile "javax.servlet:servlet-api:2.5" 
+	runtime fileTree(dir: 'lib', includes: ['*.jar'])
+}
+
+war {
+	baseName = 'cyril-rc' // leads to mywar-0.9.war
+}
