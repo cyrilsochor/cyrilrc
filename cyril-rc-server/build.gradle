@@ -21,3 +21,7 @@ dependencies {
 war {
 	baseName = 'cyril-rc' // leads to mywar-0.9.war
 }
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '1.0-milestone-9'
+}
