@@ -7,6 +7,7 @@ import groovy.transform.Field
 
 @Field java.util.logging.Logger log =  java.util.logging.Logger.getLogger("music")
 @Field MusicService musicService = MusicService.instance
+@Field def config = Application.instance.config
 
 def action = request.getAttribute("action")
 if( !action ) action = "all"
@@ -26,7 +27,39 @@ def randomAlbum(){
 }
 
 def playRandomAlbums(){
-	renderObject musicService.playRandomAlbums()
+	renderObject musicService.playRandomAlbums(params["hearer"])
+}
+
+def iHateIt(){
+	renderObject musicService.iHateIt(params["hearer"])
+}
+
+def play(){
+	renderObject musicService.execute(config.player.play)
+}
+
+def stop(){
+	renderObject musicService.execute(config.player.stop)
+}
+
+def prev(){
+	renderObject musicService.execute(config.player.prev)
+}
+
+def next(){
+	renderObject musicService.execute(config.player.next)
+}
+
+def volumeup(){
+	renderObject musicService.execute(config.player.volumeup)
+}
+
+def volumedown(){
+	renderObject musicService.execute(config.player.volumedown)
+}
+
+def changemute(){
+	renderObject musicService.execute(config.player.changemute)
 }
 
 def renderObject(it){
@@ -39,7 +72,7 @@ def renderObject(it){
 	}
 }
 
-void write(List<Artist> l, MarkupBuilder xml){
+void write(Collection<Artist> l, MarkupBuilder xml){
 	xml.artists {
 		l.each { a ->
 			write(a, xml)
@@ -65,5 +98,8 @@ void write( Album a, MarkupBuilder xml){
 	}
 }
 
+void write( String s, MarkupBuilder xml ){
+	xml.result(s)
+}
 
 

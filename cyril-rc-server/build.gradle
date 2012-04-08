@@ -14,12 +14,13 @@ dependencies {
     //runtime "org.codehaus.groovy:groovy-all:1.8.6@jar"	
     providedCompile "javax.servlet:servlet-api:2.5" 
 	groovy "org.codehaus.groovy:groovy-all:1.8.6@jar"
+	groovy "joda-time:joda-time:2.1@jar"
 	runtime group: 'org.tuckey', name:'urlrewritefilter', version:'3.2.0'
 	runtime fileTree(dir: 'lib', includes: ['*.jar'])
 }
 
 war {
-	baseName = 'cyril-rc' // leads to mywar-0.9.war
+	baseName = 'cyril-rc'
 }
 
 task wrapper(type: Wrapper) {

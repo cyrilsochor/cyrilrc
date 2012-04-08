@@ -1,13 +1,15 @@
 package cz.skymia.cyrilrc.server.domain
 
 import java.util.List;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 class Artist {
 
 	private File dir
 	private String name
-	private List<Album> albums = new LinkedList<Album>()
-	private Album first
+	def ConcurrentSkipListMap<String,Album> albumsMap = new ConcurrentSkipListMap<String,Album>()
+	
+	static java.util.logging.Logger log =  java.util.logging.Logger.getLogger(Artist.class.name)
 	
     static constraints = {
     }
@@ -20,25 +22,17 @@ class Artist {
 	public String getName(){
 		return name;
 	}
-	
+	 
 	public void setName(String name){
 		this.name = name;
 	}
 	
-	public List<Album> getAlbums(){
-		return albums;
+	public Collection<Album> getAlbums(){
+		return albumsMap.values();
 	}
 
-	public setAlbums(List<Album> albums){
-		this.albums = albums;
-	}
-	
 	public addAlbum(Album album){
-		this.albums.add(album)
-		first = album;
+		this.albumsMap.put(album.name, album)
 	}
 	
-	public Album getFirst(){return first}
-	public void setFirst(Album a){first=a}
-
 }

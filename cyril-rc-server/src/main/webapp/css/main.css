@@ -1,0 +1,8 @@
+
+table.info th ,
+table.info td {
+	border: solid;
+	border-width: 2px;
+	text-align: left;
+	padding: 1ex;
+}
