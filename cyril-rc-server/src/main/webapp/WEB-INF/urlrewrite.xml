@@ -28,7 +28,7 @@
 
     <rule match-type="wildcard">
         <from>/</from>
-        <to last="true">/home.groovy</to>
+        <to last="true">/control.gsp</to>
     </rule>
     
     <outbound-rule>

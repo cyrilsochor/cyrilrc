@@ -42,6 +42,10 @@ def stop(){
 	renderObject musicService.execute(config.player.stop)
 }
 
+def pause(){
+	renderObject musicService.execute(config.player.pause)
+}
+
 def prev(){
 	renderObject musicService.execute(config.player.prev)
 }

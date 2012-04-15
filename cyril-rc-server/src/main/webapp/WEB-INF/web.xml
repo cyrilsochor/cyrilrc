@@ -7,6 +7,11 @@
 	</servlet>
 
 	<servlet>
+		<servlet-name>GroovyTemplate</servlet-name>
+		<servlet-class>groovy.servlet.TemplateServlet</servlet-class>
+	</servlet>
+
+		<servlet>
 		<servlet-name>CyrilRCStarup</servlet-name>
 		<servlet-class>cz.skymia.cyrilrc.server.service.Startup</servlet-class>
 		<load-on-startup>1</load-on-startup>
@@ -15,6 +20,11 @@
 	<servlet-mapping>
 		<servlet-name>Groovy</servlet-name>
 		<url-pattern>*.groovy</url-pattern>
+	</servlet-mapping>
+ 
+	<servlet-mapping>
+		<servlet-name>GroovyTemplate</servlet-name>
+		<url-pattern>*.gsp</url-pattern>
 	</servlet-mapping>
 	
 	<filter>

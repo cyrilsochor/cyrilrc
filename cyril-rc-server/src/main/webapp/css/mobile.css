@@ -1,0 +1,55 @@
+body {
+	margin: 0;
+}
+
+#controlWrapper {
+	text-align: center;
+	vertical-align: center;
+}
+
+#controlWrapper img {
+	width: 80%;
+}
+
+#playWrapper div{
+	float: left;
+	width: 20%;
+}
+
+#volumeWrapper div {
+	float: left;
+	width: 20%;
+}
+
+#volumeWrapper div#changemute {
+	width: 60%;
+}
+
+#volumeWrapper div#changemute img {
+	width: 30%;
+}
+
+table.info {
+	width: 100%;
+}
+
+table.info td ,
+table.info th {
+	font-size: 200%;
+	margin: 2ex;
+}
+
+table.info td ,
+table.info tr.header th {
+	text-align: left;
+}
+
+table.info tr.data th {
+	text-align: right;
+	padding-right: 1ex;
+}
+
+table#currentPlaying caption {
+	visibility: hidden;
+}
+

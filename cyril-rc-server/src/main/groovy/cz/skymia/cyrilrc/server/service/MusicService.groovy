@@ -2,6 +2,7 @@ package cz.skymia.cyrilrc.server.service
 
 import cz.skymia.cyrilrc.server.domain.*
 
+import java.util.logging.*;
 import java.util.regex.*;
 import java.util.concurrent.*
 import org.joda.time.format.*
@@ -14,8 +15,8 @@ class MusicService {
 
 	def Pattern songPattern
 	def Random random = new Random()
-	def Pattern MESSAGE_VARIABLE_PATTERN = Pattern.compile("([^#]*)(#([^#]*)#)?");
-	def Pattern PROFILE_SECTION_PATTERN = Pattern.compile("\\[([^\\]]*)\\]");
+	private static Pattern MESSAGE_VARIABLE_PATTERN = Pattern.compile("([^#]*)(#([^#]*)#)?");
+	private static Pattern PROFILE_SECTION_PATTERN = Pattern.compile("\\[([^\\]]*)\\]");
 	
 	def config = Application.instance.config
 	def File musicHome = new File( config.music.home ).absoluteFile
@@ -23,11 +24,11 @@ class MusicService {
 	def File backupDir = config?.backup?.dir ? new File( dataHome, config.backup.dir ) : null
 	def Map<String,HearerProfile> profiles = new ConcurrentHashMap()
 
-	DateTimeFormatter BACKUP_DATETIME_FORMAT = DateTimeFormat.forPattern("yyyy-MM-dd");
+	private static DateTimeFormatter BACKUP_DATETIME_FORMAT = DateTimeFormat.forPattern("yyyy-MM-dd");
 	
 	def SECTION_MUSIC_POPULARITY = "music-popularity"
 		 
-	java.util.logging.Logger log =  java.util.logging.Logger.getLogger(this.class.name)
+	def Logger log =  Logger.getLogger(this.class.name)
 	
 	def MusicService(){
 		initSongPattern();
@@ -163,43 +164,48 @@ class MusicService {
 	}
 
 	PlayingInfo getPlayingInfo() {
-		PlayingInfo ret = new PlayingInfo()
-		def currentFileName=execute(config.player.currentfile)
-		log.info "Current file: ${currentFileName}"
-		ret.songPath = new File(currentFileName).absoluteFile
-		
-		ret.pathArray = stringSuffix(musicHome.path, ret.songPath.path).split(Pattern.quote(File.separator))
-		log.fine "Current file parts ${ret.pathArray}"
-		
-		if( ret.pathArray.length < 3 ){
-			throw new IllegalStateException("At least 3 path parts required, current ${parts}")
-		} else if( ret.pathArray.length == 3 ){
-			ret.pathTag.album = ret.pathArray[1];
-		} else {
-			ret.pathTag.album = ret.pathArray[2];
+		try {
+			PlayingInfo ret = new PlayingInfo()
+			def currentFileName=execute(config.player.currentfile)
+			log.info "Current file: ${currentFileName}"
+			ret.songPath = new File(currentFileName).absoluteFile
+			
+			ret.pathArray = stringSuffix(musicHome.path, ret.songPath.path).split(Pattern.quote(File.separator))
+			log.fine "Current file parts ${ret.pathArray}"
+			
+			if( ret.pathArray.length < 3 ){
+				throw new IllegalStateException("At least 3 path parts required, current ${parts}")
+			} else if( ret.pathArray.length == 3 ){
+				ret.pathTag.album = ret.pathArray[1];
+			} else {
+				ret.pathTag.album = ret.pathArray[2];
+			}
+			ret.pathTag.artist = ret.pathArray[1]
+			
+			def filename = ret.pathArray[ret.pathArray.length-1]
+			def lastdot = filename.lastIndexOf('.')
+			ret.pathTag.title = 1 > lastdot ? filename : filename.substring(0, lastdot)
+			
+			ret.id3v1TagArray = execute(config.player.currentId3v1tag)?.split(";", -1)
+			if( ret.id3v1TagArray?.length >= 4 ){
+				ret.id3v1Tag.artist = ret.id3v1TagArray[1]
+				ret.id3v1Tag.album = ret.id3v1TagArray[4]
+				ret.id3v1Tag.title = ret.id3v1TagArray[0]
+			}
+			
+			ret.id3v2TagArray = execute(config.player.currentId3v2tag)?.split(";", -1)
+			if( ret.id3v2TagArray?.length >= 4 ){
+				ret.id3v2Tag.artist = ret.id3v2TagArray[1]
+				ret.id3v2Tag.album = ret.id3v2TagArray[4]
+				ret.id3v2Tag.title = ret.id3v2TagArray[0]
+			}
+	
+			log.info "Current authorName:${ret.pathTag.artist}, albumName:${ret.pathTag.album}"
+			return ret
+		} catch (Throwable e){
+			log.log Level.SEVERE, "Error retrieve playing info", e 
+			return null;
 		}
-		ret.pathTag.artist = ret.pathArray[1]
-		
-		def filename = ret.pathArray[ret.pathArray.length-1]
-		def lastdot = filename.lastIndexOf('.')
-		ret.pathTag.title = 1 > lastdot ? filename : filename.substring(0, lastdot)
-		
-		ret.id3v1TagArray = execute(config.player.currentId3v1tag)?.split(";", -1)
-		if( ret.id3v1TagArray?.length >= 4 ){
-			ret.id3v1Tag.artist = ret.id3v1TagArray[1]
-			ret.id3v1Tag.album = ret.id3v1TagArray[4]
-			ret.id3v1Tag.title = ret.id3v1TagArray[0]
-		}
-		
-		ret.id3v2TagArray = execute(config.player.currentId3v2tag)?.split(";", -1)
-		if( ret.id3v2TagArray?.length >= 4 ){
-			ret.id3v2Tag.artist = ret.id3v2TagArray[1]
-			ret.id3v2Tag.album = ret.id3v2TagArray[4]
-			ret.id3v2Tag.title = ret.id3v2TagArray[0]
-		}
-
-		log.info "Current authorName:${ret.pathTag.artist}, albumName:${ret.pathTag.album}"
-		return ret
 	}
 			
 	Album getCurrentAlbum(){
