@@ -7,6 +7,7 @@ import java.util.regex.*;
 import java.util.concurrent.*
 import org.joda.time.format.*
 import org.joda.time.*
+import groovy.xml.*
 
 @Singleton
 class MusicService {
@@ -382,5 +383,56 @@ class MusicService {
 		}
 		
 		return s.substring(base.length())
+	}
+	
+	def soe(it){
+		it?it:""
+	}
+	
+	public String writePlayingHTML(){
+		writePlayingHTML(playingInfo)
+	}
+	
+	public String writePlayingHTML(PlayingInfo playing){
+		StringWriter writer = new StringWriter()
+		def build = new MarkupBuilder(writer)
+		writePlayingHTML(playing, build)
+		writer.toString()
+	}
+	
+	public String writePlayingHTML(BuilderSupport html){
+		writePlayingHTML(playingInfo, html)
+	}
+	
+	public void writePlayingHTML(playing, html){
+		html.div (id: "currentWrapper"){ 
+			table(class:"info", id:"currentPlaying"){
+				caption("Current playing")
+				tr(class:"header") {
+					td()
+					th( "File" )
+					th( "id3v1" )
+					th( "id3v2" )
+				}
+				tr(class:"data artist") {
+					th( "Artist" )
+					td( class:"pathTag", "${soe(playing?.pathTag?.artist)}" )
+					td( class:"id3v1Tag", "${soe(playing?.id3v1Tag?.artist)}" )
+					td( class:"id3v2Tag", "${soe(playing?.id3v2Tag?.artist)}" )
+				}
+				tr(class:"data album") {
+					th( "Album" )
+					td( class:"pathTag", "${soe(playing?.pathTag?.album)}" )
+					td( class:"id3v1Tag", "${soe(playing?.id3v1Tag?.album)}" )
+					td( class:"id3v2Tag", "${soe(playing?.id3v2Tag?.album)}" )
+				}
+				tr(class:"data title") {
+					th( "Title" )
+					td( class:"pathTag", "${soe(playing?.pathTag?.title)}" )
+					td( class:"id3v1Tag", "${soe(playing?.id3v1Tag?.title)}" )
+					td( class:"id3v2Tag", "${soe(playing?.id3v2Tag?.title)}" )
+				}
+			}
+		}
 	}
 }

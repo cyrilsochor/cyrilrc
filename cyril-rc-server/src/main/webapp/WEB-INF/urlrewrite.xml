@@ -31,6 +31,11 @@
         <to last="true">/control.gsp</to>
     </rule>
     
+    <rule match-type="wildcard">
+        <from>/current</from>
+        <to last="true">/current.groovy</to>
+    </rule>
+    
     <outbound-rule>
         <note>
             The outbound-rule specifies that when response.encodeURL is called (if you are using JSTL c:url)

@@ -5,6 +5,7 @@ function ButtonAction(name) {
 	  this.action = function () { 
 			event.preventDefault();
 			$.get("music/"+name);
+			setTimeout(function() {$("#currentWrapper").load("music/currentHTML")} , 500);
 	  };
 }
 

@@ -66,6 +66,10 @@ def changemute(){
 	renderObject musicService.execute(config.player.changemute)
 }
 
+def currentHTML(){
+	musicService.writePlayingHTML(html)
+}
+
 def renderObject(it){
 	response.setContentType('text/xml')
 	if( it == null ){
@@ -105,5 +109,4 @@ void write( Album a, MarkupBuilder xml){
 void write( String s, MarkupBuilder xml ){
 	xml.result(s)
 }
-
 
