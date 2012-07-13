@@ -3,13 +3,17 @@ package cz.skymia.cyrilrc.server.util
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.slf4j.spi.LoggerFactoryBinder;
+
 class ListWithWeight<T> {
 
 	ConcurrentHashMap<T, Long> map = new ConcurrentHashMap();
 	long sum = 0;
 	def Random random = new Random()
 	
-	java.util.logging.Logger log =  java.util.logging.Logger.getLogger(ListWithWeight.class.name)
+	Logger log =  LoggerFactory.getLogger(ListWithWeight.class)
 	
 	synchronized void add(T object, long weight){
 		map.put(object, weight)
@@ -21,6 +25,19 @@ class ListWithWeight<T> {
 		if( weight ){
 			sum -= weight
 		}
+	}
+
+	Iterator<T> randomIterator(count){
+		return new RandomIterator(count)
+	}
+	
+	List<T> randomList(count){
+		def ret = new ArrayList<T>()
+		for( T t: randomIterator(count)){
+			ret.add(t)
+		}
+		Collections.shuffle(ret)
+		return ret
 	}
 
 	class RandomIterator<T> implements Iterator<T>{
@@ -74,8 +91,4 @@ class ListWithWeight<T> {
 		
 	}
 	
-	Iterator<T> randomIterator(count){
-		return new RandomIterator(count)
-	}
-
 }

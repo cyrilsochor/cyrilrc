@@ -1,7 +1,9 @@
 package cz.skymia.cyrilrc.server.domain
 
-import java.util.List;
 import java.util.concurrent.ConcurrentSkipListMap;
+
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 class Artist {
 
@@ -9,7 +11,7 @@ class Artist {
 	private String name
 	def ConcurrentSkipListMap<String,Album> albumsMap = new ConcurrentSkipListMap<String,Album>()
 	
-	static java.util.logging.Logger log =  java.util.logging.Logger.getLogger(Artist.class.name)
+	static Logger log =  LoggerFactory.getLogger(Artist.class)
 	
     static constraints = {
     }
@@ -35,4 +37,7 @@ class Artist {
 		this.albumsMap.put(album.name, album)
 	}
 	
+	public String toString(){
+		"Artist[name=${name}]"
+	}
 }

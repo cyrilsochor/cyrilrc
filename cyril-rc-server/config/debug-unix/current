@@ -1,0 +1,1 @@
+head -n 1 /home/sochor/.cyrilrc/playing.txt | tr -d '\n'

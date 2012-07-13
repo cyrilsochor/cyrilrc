@@ -1,11 +1,12 @@
 package cz.skymia.cyrilrc.server.service
 
-import javax.servlet.ServletException;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 @Singleton
 class Application {
 	
-	java.util.logging.Logger log =  java.util.logging.Logger.getLogger(this.class.name)
+	Logger log =  LoggerFactory.getLogger(this.class)
 	
 	ConfigObject config
 	
@@ -51,6 +52,7 @@ class Application {
 				}
 			}
 		}
+		
 		
 		return ret
 	}

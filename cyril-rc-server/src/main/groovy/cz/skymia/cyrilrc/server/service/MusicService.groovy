@@ -2,7 +2,9 @@ package cz.skymia.cyrilrc.server.service
 
 import cz.skymia.cyrilrc.server.domain.*
 
-import java.util.logging.*;
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 import java.util.regex.*;
 import java.util.concurrent.*
 import org.joda.time.format.*
@@ -21,6 +23,7 @@ class MusicService {
 	
 	def config = Application.instance.config
 	def File musicHome = new File( config.music.home ).absoluteFile
+	def String profileAlbumPrefix = musicHome.path  + File.separator;
 	def File dataHome = new File( config.data.home ).absoluteFile
 	def File backupDir = config?.backup?.dir ? new File( dataHome, config.backup.dir ) : null
 	def Map<String,HearerProfile> profiles = new ConcurrentHashMap()
@@ -28,8 +31,11 @@ class MusicService {
 	private static DateTimeFormatter BACKUP_DATETIME_FORMAT = DateTimeFormat.forPattern("yyyy-MM-dd");
 	
 	def SECTION_MUSIC_POPULARITY = "music-popularity"
-		 
-	def Logger log =  Logger.getLogger(this.class.name)
+	
+	static final POPULARITY_DEFAULT = 2;
+	
+
+	def Logger log =  LoggerFactory.getLogger(this.class)
 	
 	def MusicService(){
 		initSongPattern();
@@ -43,7 +49,9 @@ class MusicService {
 		}
 		
 		loadMusic()
-		log.info "Found ${artistsMap.size()} artists"
+		def artistCount = artistsMap.size()
+		def albumCount = artistsMap.values().sum(){it.albumsMap.size()}
+		log.info "Found ${artistCount} artists, ${albumCount} albums"
 		if( config.player.startup.playRandomAlbums ){
 			playRandomAlbums()
 		}
@@ -51,7 +59,7 @@ class MusicService {
 
 	private loadMusic() {
 		musicHome.eachDir { artistDir ->
-			log.fine "Found artist directory ${artistDir.absolutePath}"
+			log.trace "Found artist directory ${artistDir.absolutePath}"
 			def artist = new Artist( artistDir )
 
 			loadAlbum(artist, artistDir)
@@ -59,7 +67,7 @@ class MusicService {
 				loadAlbum(artist, albumDir)
 			}
 
-			log.finer "Artist ${artist.name} has ${artist.albums?.size()} albums"
+			log.trace "Artist ${artist.name} has ${artist.albums?.size()} albums"
 			if( artist.albums ){
 				artistsMap.put(artist.name, artist)
 			}
@@ -104,36 +112,36 @@ class MusicService {
 	}
 	
 	def playProfileRandomAlbums(HearerProfile profile){
-		def ret = []
-		boolean first = true
-		profile.albumsWeight.randomIterator(config.player.loadCount).count { Album album ->
-			log.info "Playing ${album.dir.absolutePath}"
+		List<Album> ret = profile.albumsWeight.randomList(config.player.loadCount)
+		log.info ""+ret 
+		ret.eachWithIndex { Album album, index ->
+			log.info "Play ${album.dir.absolutePath}"
 			def params = [file:album.dir.absolutePath]
-			if( first ){
+			if( index==0 ){
 				execute(config.player.loadplay, params)
-				first = false
 			} else {
 				execute(config.player.load, params)
 			}
-			ret += album
 		}
-		
 		return ret
 	}
 	
-	def iHateIt(hearer){
+	def setPopularity(hearer, popularity){
 		HearerProfile profile = getHearerProfile(hearer)
 		Album album = getCurrentAlbum()
 		
 		if( album ){
-			int oldPopularity = profile.getPopularity(album)
-			int popularity = oldPopularity-1
-			profile.musicPopularity.put( album.dir.absoluteFile, popularity )
-			profile.ensure(album, popularity)
+			//int oldPopularity = profile.getPopularity(album)
+			//int popularity = oldPopularity-1
+			profile.setPopularity(album, popularity)
 			storeProfile(profile)
+		} else {
+			log.warn "No current album when setting popularity to ${popularity} for ${hearer}"
 		}
 		
-		playProfileRandomAlbums(profile)
+		if( popularity < POPULARITY_DEFAULT ) {
+			playProfileRandomAlbums(profile)
+		}	
 	}
 	
 	HearerProfile getHearerProfile(String hearer=null){
@@ -148,7 +156,7 @@ class MusicService {
 			profiles.put(ret.name, ret)
 		}
 		
-		log.info "Using profile ${ret}"
+		log.debug "Using profile ${ret}"
 		return ret
 	}
 
@@ -172,7 +180,7 @@ class MusicService {
 			ret.songPath = new File(currentFileName).absoluteFile
 			
 			ret.pathArray = stringSuffix(musicHome.path, ret.songPath.path).split(Pattern.quote(File.separator))
-			log.fine "Current file parts ${ret.pathArray}"
+			log.trace "Current file parts ${ret.pathArray}"
 			
 			if( ret.pathArray.length < 3 ){
 				throw new IllegalStateException("At least 3 path parts required, current ${parts}")
@@ -204,26 +212,32 @@ class MusicService {
 			log.info "Current authorName:${ret.pathTag.artist}, albumName:${ret.pathTag.album}"
 			return ret
 		} catch (Throwable e){
-			log.log Level.SEVERE, "Error retrieve playing info", e 
+			log.error "Error retrieve playing info", e 
 			return null;
 		}
 	}
 			
-	Album getCurrentAlbum(){
-		PlayingInfo playing = getPlayingInfo()
-			
-		Artist artist = artistsMap.get(playing?.pathTag.artist)
+	Album getCurrentAlbum(PlayingInfo playing=null){
+		if( playing == null ){
+			playing = playingInfo 
+		}
+		
+		if( !playing?.pathTag?.artist ){
+			return null;
+		}
+		
+		Artist artist = artistsMap.get(playing?.pathTag?.artist)
 		if( !artist ){
-			log.warning "Artist with name '${playing?.pathTag.artist}' not found"
+			log.warn "Artist with name '${playing?.pathTag?.artist}' not found"
 			return null
 		}
 		
-		Album album = artist.albumsMap.get(playing?.pathTag.album)
+		Album album = artist.albumsMap.get(playing?.pathTag?.album)
 		if( !album ){
-			log.warning "Album with name '${playing?.pathTag.album}' not found for artist ${artist}"
+			log.warn "Album with name '${playing?.pathTag?.album}' not found for artist ${artist}"
 		}
 
-		log.fine "Current album: ${album}"
+		log.trace "Current album: ${album}"
 		return album;
 	}
 	
@@ -243,7 +257,7 @@ class MusicService {
 		file.withWriter { out ->
 			out.println "["+SECTION_MUSIC_POPULARITY+"]"
 			profile.musicPopularity.entrySet().each {
-				out.println "${stringSuffix(musicHome.path, it.key.path)}:${it.value}"
+				out.println "${stringSuffix(profileAlbumPrefix, it.key.path)}:${it.value}"
 			}
 		}
 	}
@@ -256,7 +270,7 @@ class MusicService {
 				String section;
 				input.eachLine { line ->
 					if( line.trim().length() > 0 ){
-						log.fine "Profile line:${line}"
+						log.trace "Profile line:${line}"
 						def sectionM = line =~ PROFILE_SECTION_PATTERN;
 						if( sectionM.matches() ){
 							section = sectionM.group(1);
@@ -272,11 +286,11 @@ class MusicService {
 										profile.musicPopularity.put(new File(musicHome, fields[0]), Integer.parseInt(fields[1]))
 										break;
 									default:
-										log.warning "Invalid line in section ${SECTION_MUSIC_POPULARITY}:  ${fields} must be array of length 1 or 2"
+										log.warn "Invalid line in section ${SECTION_MUSIC_POPULARITY}:  ${fields} must be array of length 1 or 2"
 									}
 									break;
 								default:
-									log.warning "Unknown section ${section}"
+									log.warn "Unknown section ${section}"
 							}
 						}
 					}
@@ -318,12 +332,12 @@ class MusicService {
 			def cmdExitCode = process.waitFor()
 			if( outStream.toString() )	log.info 'out:\n' + outStream
 			if( errStream.toString() ) log.info 'err:\n' + errStream
-			log.info "Command exit code ${cmdExitCode}"
+			log.debug "Command exit code ${cmdExitCode}"
 		}
 	}
 	
 	def execute( ConfigObject cfg, Map params = null){
-		log.info "Executing ${cfg} with parameters ${params}"
+		log.debug "Executing ${cfg} with parameters ${params}"
 		def ret
 				
 		for(int urlIndex=0; ; urlIndex++){
@@ -332,11 +346,11 @@ class MusicService {
 				break;
 			}
 
-			log.fine "Executing action ${action}"
-			def url = new URL(config.player.url + replaceVariables(action, params))
+			log.trace "Executing url action: ${action}"
+			def url = new URL(config.player.url + replaceVariables(action, params,true))
 			log.info "Executing HTTP GET request ${url}"
 			ret = url.text
-			log.info "Response ${ret}"
+			log.degbug "Response ${ret}"
 		}
 
 		for(int cmdIndex=0; ; cmdIndex++){
@@ -345,19 +359,26 @@ class MusicService {
 				break;
 			}
 
-			log.info "Executing action ${action}"
-			def process = action.execute()
+			log.debug "Action configuration class ${action.class.name}"
+			def cmd = replaceVariables(action, params, false);
+			log.info "Executing command: ${cmd}"
+			def process = cmd.execute()
 			def cmdExitCode = process.waitFor()
-			log.info "Command exit code ${cmdExitCode}"
 			ret = process.text
-			log.info "Response ${ret}"
+			log.debug "Executing finished exitCode=${cmdExitCode} text=${ret}"
 		}
 
 		return ret
 	}
 	
 	
-	String replaceVariables(String text, Map params){
+	String[] replaceVariables(List texts, Map params, boolean urlEncode){
+		texts.collect(){
+			replaceVariables(it, params, urlEncode)
+		}
+	}
+	
+	String replaceVariables(String text, Map params, boolean urlEncode){
 		final StringBuilder ret = new StringBuilder(text.length() + 10);
 
 		final Matcher matcher = MESSAGE_VARIABLE_PATTERN.matcher(text);
@@ -367,7 +388,11 @@ class MusicService {
 			if (paramKey != null) {
 				final String paramValue = params[paramKey];
 				if( paramValue ){
-					ret.append(java.net.URLEncoder.encode(paramValue,"ISO-8859-1").replaceAll("\\+", "%20"));
+					if( urlEncode ){
+						ret.append(java.net.URLEncoder.encode(paramValue,"ISO-8859-1").replaceAll("\\+", "%20"));
+					} else {
+						ret.append(paramValue);
+					}
 				}
 			}
 		}
@@ -375,6 +400,7 @@ class MusicService {
 	}
 
 	String stringSuffix(String base, String s){
+		log.info "SSSSSSSSSSS '${base}'  ----- '${s}'"
 		if(s.length() < base.length() ){
 			throw new IllegalArgumentException("String '${s}' is shorter then base string '${base}'")
 		}
@@ -386,7 +412,7 @@ class MusicService {
 	}
 	
 	def soe(it){
-		it?it:""
+		it ? it : ""
 	}
 	
 	public String writePlayingHTML(){
@@ -396,21 +422,25 @@ class MusicService {
 	public String writePlayingHTML(PlayingInfo playing){
 		StringWriter writer = new StringWriter()
 		def build = new MarkupBuilder(writer)
-		writePlayingHTML(playing, build)
+		writePlayingHTML(build, playing)
 		writer.toString()
 	}
 	
 	public String writePlayingHTML(BuilderSupport html){
-		writePlayingHTML(playingInfo, html)
+		writePlayingHTML(html, playingInfo)
 	}
 	
-	public void writePlayingHTML(playing, html){
+	public void writePlayingHTML(html, playing, hearer=null){
+		HearerProfile profile = getHearerProfile(hearer)
+		def currentAlbum = getCurrentAlbum(playing)
+		int currentPopularity = profile.getPopularity(currentAlbum);
+		log.info "Genereting playing HTML for current album ${currentAlbum} with popularity ${currentPopularity}"
 		html.div (id: "currentWrapper"){ 
 			table(class:"info", id:"currentPlaying"){
 				caption("Current playing")
 				tr(class:"header") {
 					td()
-					th( "File" )
+					th( "Path" )
 					th( "id3v1" )
 					th( "id3v2" )
 				}
@@ -431,6 +461,28 @@ class MusicService {
 					td( class:"pathTag", "${soe(playing?.pathTag?.title)}" )
 					td( class:"id3v1Tag", "${soe(playing?.id3v1Tag?.title)}" )
 					td( class:"id3v2Tag", "${soe(playing?.id3v2Tag?.title)}" )
+				}
+			}
+			div (id:"popularity"){
+				for( int popularity = 0; popularity < 5; popularity++ ) {
+					div( class:"popularity", id:("setPopularity"+popularity) ){
+						a( href:"#"){
+							def String imgsrc = "icon/"
+							if( popularity < 2 ){
+								imgsrc += "down"
+							} else {
+								imgsrc += "up"
+							}
+							if( currentPopularity >= popularity ){
+								imgsrc += "B" 
+							} else {
+								imgsrc += "M" 
+							}
+							imgsrc += ".png"
+							
+							img( src:imgsrc )
+						}
+					}
 				}
 			}
 		}

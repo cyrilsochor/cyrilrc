@@ -1,11 +1,12 @@
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import grails.converters.*
 import groovy.xml.*
-import groovy.util.logging.Log
 import cz.skymia.cyrilrc.server.domain.*
 import cz.skymia.cyrilrc.server.service.*
 import groovy.transform.Field
 
-@Field java.util.logging.Logger log =  java.util.logging.Logger.getLogger("music")
+@Field Logger log =  LoggerFactory.getLogger("music")
 @Field MusicService musicService = MusicService.instance
 @Field def config = Application.instance.config
 
@@ -30,8 +31,28 @@ def playRandomAlbums(){
 	renderObject musicService.playRandomAlbums(params["hearer"])
 }
 
-def iHateIt(){
-	renderObject musicService.iHateIt(params["hearer"])
+def setPopularity(popularity){
+	renderObject musicService.setPopularity(params["hearer"], popularity)
+}
+
+def setPopularity0(){
+	setPopularity(0)
+}
+
+def setPopularity1(){
+	setPopularity(1)
+}
+
+def setPopularity2(){
+	setPopularity(2)
+}
+
+def setPopularity3(){
+	setPopularity(3)
+}
+
+def setPopularity4(){
+	setPopularity(4)
 }
 
 def play(){
@@ -64,6 +85,10 @@ def volumedown(){
 
 def changemute(){
 	renderObject musicService.execute(config.player.changemute)
+}
+
+def shutdown(){
+	renderObject musicService.execute(config.player.shutdown)
 }
 
 def currentHTML(){

@@ -7,26 +7,25 @@ body {
 	vertical-align: center;
 }
 
-#controlWrapper img {
+#controlWrapper img ,
+#popularity img ,
+#volumeWrapper img {
 	width: 80%;
 }
 
-#playWrapper div{
-	float: left;
-	width: 20%;
-}
-
+#playWrapper div, 
+#popularity div ,
 #volumeWrapper div {
 	float: left;
 	width: 20%;
 }
 
 #volumeWrapper div#changemute {
-	width: 60%;
+	width: 40%;
 }
 
 #volumeWrapper div#changemute img {
-	width: 30%;
+	width: 43%;
 }
 
 table.info {

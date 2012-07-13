@@ -26,6 +26,7 @@ def soe(it){
 			<div id="volumedown"><a href="#"><img src="icon/volumedown.png" /></a></div>
 			<div id="changemute"><a href="#"><img src="icon/changemute.png" /></a></div>
 			<div id="volumeup"><a href="#"><img src="icon/volumeup.png" /></a></div>
+			<div id="shutdown"><a href="#"><img src="icon/shutdown.png" /></a></div>
 		</div>
 	</div>
 	<%  print musicService.writePlayingHTML(playing) %>

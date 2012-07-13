@@ -15,6 +15,10 @@ dependencies {
     providedCompile "javax.servlet:servlet-api:2.5" 
 	groovy "org.codehaus.groovy:groovy-all:1.8.6@jar"
 	groovy "joda-time:joda-time:2.1@jar"
+	groovy "org.slf4j:slf4j-api:1.6.6"
+	groovy "org.slf4j:slf4j-log4j12:1.6.6"
+	groovy "log4j:log4j:1.2.17"
+	
 	runtime group: 'org.tuckey', name:'urlrewritefilter', version:'3.2.0'
 	runtime fileTree(dir: 'lib', includes: ['*.jar'])
 }

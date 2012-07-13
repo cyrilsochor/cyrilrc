@@ -3,10 +3,13 @@ package cz.skymia.cyrilrc.server.service
 import javax.servlet.ServletException;
 import javax.servlet.http.*
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
 
 public class Startup extends HttpServlet {
 	
-	java.util.logging.Logger log =  java.util.logging.Logger.getLogger(this.class.name)
+	Logger log =  LoggerFactory.getLogger(this.class)
 	
 	public Startup(){
 	}

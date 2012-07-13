@@ -24,4 +24,8 @@ class Album {
 	public File getDir(){
 		return dir;
 	}
+	
+	public String toString(){
+		"Album[name=${name}]"
+	}
 }
