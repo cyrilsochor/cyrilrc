@@ -400,7 +400,6 @@ class MusicService {
 	}
 
 	String stringSuffix(String base, String s){
-		log.info "SSSSSSSSSSS '${base}'  ----- '${s}'"
 		if(s.length() < base.length() ){
 			throw new IllegalArgumentException("String '${s}' is shorter then base string '${base}'")
 		}
