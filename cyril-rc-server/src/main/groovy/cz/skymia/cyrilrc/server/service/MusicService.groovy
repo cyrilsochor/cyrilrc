@@ -350,7 +350,7 @@ class MusicService {
 			def url = new URL(config.player.url + replaceVariables(action, params,true))
 			log.info "Executing HTTP GET request ${url}"
 			ret = url.text
-			log.degbug "Response ${ret}"
+			log.debug "Response ${ret}"
 		}
 
 		for(int cmdIndex=0; ; cmdIndex++){
