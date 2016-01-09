@@ -41,7 +41,7 @@ class Application {
 				} else if( it instanceof Class) {
 					url = it;
 				} else {
-					log.error "Unknow config location type ${it.class.name}"
+					log.error "Unknown config location type ${it.class.name}"
 				}
 				
 				if( url ) {

@@ -48,6 +48,18 @@ class MusicService {
 			backupDir.mkdirs()
 		}
 		
+		if( config.startup?.command ){
+			log.info "Executing startup command: ${config.startup.command}"
+			try {
+				def p = config.startup.command.execute()
+				p.consumeProcessOutput()
+				p.waitFor()
+				log.info "Startup command exit code: ${p.exitValue()}"
+			} catch (Throwable thr){
+				log.error("Error executing startup command", thr)
+			}
+		}
+
 		loadMusic()
 		def artistCount = artistsMap.size()
 		def albumCount = artistsMap.values().sum(){it.albumsMap.size()}
@@ -58,8 +70,9 @@ class MusicService {
 	}
 
 	private loadMusic() {
+		log.info "Loading music in '${musicHome.absolutePath}', exists: ${musicHome.exists()}"
 		musicHome.eachDir { artistDir ->
-			log.trace "Found artist directory ${artistDir.absolutePath}"
+			log.info "Found artist directory ${artistDir.absolutePath}"
 			def artist = new Artist( artistDir )
 
 			loadAlbum(artist, artistDir)
